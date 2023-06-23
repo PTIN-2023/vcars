@@ -1,15 +1,11 @@
 FROM python:3.9
 
-COPY requirements.txt /app
+COPY requirements.txt /opt
 
-WORKDIR /app
+WORKDIR /opt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app
+COPY . /opt
 
 ENTRYPOINT ["python3", "-u", "virtualCar.py"]
-
-CMD ["--id", "1"]
-
-# docker logs -f virtual-car-1

@@ -1,0 +1,41 @@
+version: '3'
+services:
+  virtual-car-1:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
+    command: --id 1
+
+  virtual-car-2:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
+    command: --id 2
+
+  virtual-car-3:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
+    command: --id 3
+
+  virtual-car-4:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
+    command: --id 4
+
+  virtual-car-5:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - .:/app
+    command: --id 5
