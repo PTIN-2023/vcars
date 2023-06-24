@@ -1,5 +1,6 @@
 import math, time, argparse
 from threading import Thread
+import os
 # ---------------------------- #
 import json
 import paho.mqtt.client as mqtt
@@ -25,6 +26,9 @@ status_desc = {
     7 : "alert - possible avaria de camí o qualsevol situació anormal."
 }
 
+mqtt_address = os.environ.get('MQTT_ADDRESS')
+mqtt_port = int(os.environ.get('MQTT_PORT'))
+num_cars = int(os.environ.get('NUM_CARS'))
 
 # ------------------------------------------------------------------------------ #
 
@@ -122,7 +126,7 @@ class vcar:
 
     def send_location(self, id, location, status, battery, autonomy):
         # Connect to MQTT server
-        self.clientS.connect("147.83.159.195", 24183, 60)
+        self.clientS.connect(mqtt_address, mqtt_port, 60)
 
         # JSON
         msg = {	"id_car": 	        id,
@@ -147,7 +151,7 @@ class vcar:
     def update_status(self, id, status):
 
         # Connect to MQTT server
-        self.clientS.connect("147.83.159.195", 24183, 60)
+        self.clientS.connect(mqtt_address, mqtt_port, 60)
 
         # JSON
         msg = {	"id_car":       id,
@@ -198,7 +202,7 @@ class vcar:
         clientR.on_connect = self.on_connect
         clientR.on_message = self.on_message
 
-        clientR.connect("147.83.159.195", 24183, 60)
+        clientR.connect(mqtt_address, mqtt_port, 60)
         clientR.loop_forever()
 
 # ------------------------------------------------------------------------------ #
@@ -244,7 +248,7 @@ if __name__ == '__main__':
 
     threads = []
 
-    for i in range(1, 5):
+    for i in range(1, num_cars+1):
         car = vcar(i)
         API = Thread(target=car.start)
         CTL = Thread(target=car.control)
