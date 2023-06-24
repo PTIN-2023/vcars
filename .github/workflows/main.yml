@@ -1,4 +1,4 @@
-name: ci-vcar
+name: ci
 
 on:
   push:
