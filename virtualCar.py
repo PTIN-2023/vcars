@@ -179,9 +179,7 @@ class vcar:
     def on_message(self, client, userdata, msg):
         
         if msg.topic == "PTIN2023/CAR/STARTROUTE":	
-
-            self.ID
-            self.coordinates    
+  
             if(is_json(msg.payload.decode('utf-8'))):
                 
                 payload = json.loads(msg.payload.decode('utf-8'))
