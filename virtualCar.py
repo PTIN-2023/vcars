@@ -29,6 +29,7 @@ status_desc = {
 mqtt_address = os.environ.get('MQTT_ADDRESS')
 mqtt_port = int(os.environ.get('MQTT_PORT'))
 num_cars = int(os.environ.get('NUM_CARS'))
+car_speed = int(os.environ.get('CAR_SPEED'))
 
 # ------------------------------------------------------------------------------ #
 
@@ -119,7 +120,7 @@ class vcar:
             x1, y1 = x2, y2
 
             # Add some delay to simulate the car movement
-            time.sleep(2)
+            time.sleep(car_speed)
 
         self.car_return = not self.car_return
         self.coordinates.reverse()
