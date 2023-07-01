@@ -11,7 +11,7 @@ mqtt_port = 24183
 client = mqtt.Client()
 client.connect(mqtt_address, mqtt_port, 60)
 # Crea un mensaje JSON
-mensaje = {	"id_car": 	1,
+mensaje = {	"id_car": 	10,
         	"order": 	1,
             "route":	0}
 
@@ -28,7 +28,7 @@ mensaje_json = json.dumps(mensaje)
 client.publish("PTIN2023/CAR/STARTROUTE", mensaje_json)
 
 # Crea un mensaje JSON
-mensaje = {	"id_car": 	1,
+mensaje = {	"id_car": 	10,
             "hehe":	0}
 
 mensaje["hehe"] = input("Escriu l'anomalia que vols testejar: ")
