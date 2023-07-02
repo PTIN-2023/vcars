@@ -129,12 +129,13 @@ class vcar:
         latitude_distance = self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1]
         longitude_distance = self.coordinates[next_coord_index][0] - self.coordinates[base_coord_index][0]
         modulo = math.sqrt(latitude_distance*latitude_distance + longitude_distance*longitude_distance)
-        latitude_uv = latitude_distance/modulo
-        longitude_uv = longitude_distance/modulo
 
         print("CAR: " + str(self.ID) + " | BASE COORD INDEX: " + str(base_coord_index))
         print("CAR: " + str(self.ID) + " | MODULO: " + str(modulo))
         print("CAR: " + str(self.ID) + " | DIRECTION: " + str(latitude_uv) + " " + str(longitude_uv))
+
+        latitude_uv = latitude_distance/modulo
+        longitude_uv = longitude_distance/modulo
 
         # Compute next pos
         latitude = latitude + latitude_uv*car_speed*delta_time
@@ -142,6 +143,12 @@ class vcar:
 
         # Compute interpolation value
         interpolation_val = (latitude - self.coordinates[base_coord_index][1]) / (self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1])
+
+        # Make sure we didn't overshoot
+        if(next_coord_index < interpolation_val):
+            latitude = self.coordinates[next_coord_index][1]
+            longitude = self.coordinates[next_coord_index][0]
+            interpolation_val = next_coord_index
 
         return (latitude, longitude, interpolation_val)
 
