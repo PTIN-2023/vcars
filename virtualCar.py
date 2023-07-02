@@ -130,12 +130,8 @@ class vcar:
         longitude_distance = self.coordinates[next_coord_index][0] - self.coordinates[base_coord_index][0]
         modulo = max(math.sqrt(latitude_distance*latitude_distance + longitude_distance*longitude_distance), 0.001)
 
-        print("CAR: " + str(self.ID) + " | MODULO: " + str(modulo))
-
         latitude_uv = latitude_distance/modulo
         longitude_uv = longitude_distance/modulo
-
-        print("CAR: " + str(self.ID) + " | DIRECTION: " + str(latitude_uv) + " " + str(longitude_uv))
 
         # Compute next pos
         latitude = latitude + latitude_uv*car_speed*delta_time
@@ -154,13 +150,8 @@ class vcar:
 
     def start_car(self):
         while self.interpolation_val < len(self.coordinates) - 1:
-            print("CAR: " + str(self.ID) + " | -------------------------------------------------")
-            print("CAR: " + str(self.ID) + " | INTERPOLATION VAR: " + str(self.interpolation_val))
             x1, y1 = self.interpolation_to_coord()
-            print("CAR: " + str(self.ID) + " | POSITION: " + str(x1) + " " + str(y1))
             x2, y2, interpolation_val = self.interpolation_to_next_coord()
-            print("CAR: " + str(self.ID) + " | NEW POS: " + str(x2) + " " + str(y2))
-            print("CAR: " + str(self.ID) + " | NEW INTERPOLATION VAR: " + str(interpolation_val))
 
             # Calculate the distance between the current point and the next point
             distance = (x2 - x1, y2 - y1)
@@ -182,6 +173,7 @@ class vcar:
 
         self.car_return = not self.car_return
         self.coordinates.reverse()
+        self.interpolation_val = 0
 
     def send_location(self, id, pos, status, battery, autonomy):
         latitude, longitude = pos
