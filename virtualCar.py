@@ -132,10 +132,11 @@ class vcar:
 
         print("CAR: " + str(self.ID) + " | BASE COORD INDEX: " + str(base_coord_index))
         print("CAR: " + str(self.ID) + " | MODULO: " + str(modulo))
-        print("CAR: " + str(self.ID) + " | DIRECTION: " + str(latitude_uv) + " " + str(longitude_uv))
 
         latitude_uv = latitude_distance/modulo
         longitude_uv = longitude_distance/modulo
+        
+        print("CAR: " + str(self.ID) + " | DIRECTION: " + str(latitude_uv) + " " + str(longitude_uv))
 
         # Compute next pos
         latitude = latitude + latitude_uv*car_speed*delta_time
