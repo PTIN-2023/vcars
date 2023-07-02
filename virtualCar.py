@@ -132,6 +132,10 @@ class vcar:
         latitude_uv = latitude_distance/modulo
         longitude_uv = longitude_distance/modulo
 
+        print("CAR: " + str(id) + " | BASE COORD INDEX: " + str(base_coord_index))
+        print("CAR: " + str(id) + " | MODULO: " + str(modulo))
+        print("CAR: " + str(id) + " | DIRECTION: " + str(latitude_uv) + " " + str(longitude_uv))
+
         # Compute next pos
         latitude = latitude + latitude_uv*car_speed*delta_time
         longitude = longitude + longitude_uv*car_speed*delta_time
@@ -143,6 +147,7 @@ class vcar:
 
     def start_car(self):
         while self.interpolation_val < len(self.coordinates) - 1:
+            print("CAR: " + str(id) + " | INTERPOLATION BAR: " + str(self.interpolation_val))
             x1, y1 = self.interpolation_to_coord()
             x2, y2, interpolation_val = self.interpolation_to_next_coord()
 
