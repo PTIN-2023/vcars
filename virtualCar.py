@@ -169,7 +169,7 @@ class vcar:
 
     def send_location(self, id, pos, status, battery, autonomy):
         latitude, longitude = pos
-        print("CAR: " + str(id) + " | POSITION: " + latitude + " " + longitude)
+        print("CAR: " + str(id) + " | POSITION: " + str(latitude) + " " + str(longitude))
 
         # Connect to MQTT server
         self.clientS.connect(mqtt_address, mqtt_port, 60)
