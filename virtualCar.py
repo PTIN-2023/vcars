@@ -150,7 +150,7 @@ class vcar:
             print("CAR: " + str(self.ID) + " | -------------------------------------------------")
             print("CAR: " + str(self.ID) + " | INTERPOLATION VAR: " + str(self.interpolation_val))
             x1, y1 = self.interpolation_to_coord()
-            print("CAR: " + str(id) + " | POSITION: " + str(x1) + " " + str(x2))
+            print("CAR: " + str(id) + " | POSITION: " + str(x1) + " " + str(y1))
             x2, y2, interpolation_val = self.interpolation_to_next_coord()
             print("CAR: " + str(self.ID) + " | NEW POS: " + str(x2) + " " + str(y2))
             print("CAR: " + str(self.ID) + " | NEW INTERPOLATION VAR: " + str(interpolation_val))
