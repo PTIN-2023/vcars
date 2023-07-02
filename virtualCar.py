@@ -128,10 +128,7 @@ class vcar:
         # Compute direction unit vector
         latitude_distance = self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1]
         longitude_distance = self.coordinates[next_coord_index][0] - self.coordinates[base_coord_index][0]
-        modulo = math.sqrt(latitude_distance*latitude_distance + longitude_distance*longitude_distance)
-
-        print("CAR: " + str(self.ID) + " | BASE COORD INDEX: " + str(base_coord_index))
-        print("CAR: " + str(self.ID) + " | MODULO: " + str(modulo))
+        modulo = max(math.sqrt(latitude_distance*latitude_distance + longitude_distance*longitude_distance), 0.001)
 
         latitude_uv = latitude_distance/modulo
         longitude_uv = longitude_distance/modulo
