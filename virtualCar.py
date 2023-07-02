@@ -130,6 +130,8 @@ class vcar:
         longitude_distance = self.coordinates[next_coord_index][0] - self.coordinates[base_coord_index][0]
         modulo = max(math.sqrt(latitude_distance*latitude_distance + longitude_distance*longitude_distance), 0.001)
 
+        print("CAR: " + str(self.ID) + " | MODULO: " + str(modulo))
+
         latitude_uv = latitude_distance/modulo
         longitude_uv = longitude_distance/modulo
 
