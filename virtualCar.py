@@ -102,7 +102,7 @@ class vcar:
     def interpolation_to_coord(self):
         # Get current 
         base_coord_index = min(math.floor(self.interpolation_val), len(self.coordinates) - 1)
-        next_coord_index = min(math.ceil(self.interpolation_val), len(self.coordinates) - 1)
+        next_coord_index = min(base_coord_index + 1, len(self.coordinates) - 1)
 
         # Compute interpolated position
         remainder_interpolation = self.interpolation_val % 1
@@ -114,12 +114,16 @@ class vcar:
     def interpolation_to_next_coord(self):
         # Get current
         base_coord_index = min(math.floor(self.interpolation_val), len(self.coordinates) - 1)
-        next_coord_index = min(math.ceil(self.interpolation_val), len(self.coordinates) - 1)
+        next_coord_index = min(base_coord_index + 1, len(self.coordinates) - 1)
 
         # Compute interpolated position
         remainder_interpolation = self.interpolation_val % 1
         latitude = self.coordinates[base_coord_index][1]*(1-remainder_interpolation) + self.coordinates[next_coord_index][1]*remainder_interpolation
         longitude = self.coordinates[base_coord_index][0]*(1-remainder_interpolation) + self.coordinates[next_coord_index][0]*remainder_interpolation
+
+        # Check if we are at the end
+        if base_coord_index == next_coord_index:
+            return (latitude, longitude, len(self.coordinates) - 1)
 
         # Compute direction unit vector
         latitude_distance = self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1]
