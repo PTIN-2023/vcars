@@ -149,9 +149,10 @@ class vcar:
         return (latitude, longitude, interpolation_val)
 
     def start_car(self):
+        self.interpolation_val = 0
         while self.interpolation_val < len(self.coordinates) - 1:
             x1, y1 = self.interpolation_to_coord()
-            x2, y2, interpolation_val = self.interpolation_to_next_coord()
+            x2, y2, self.interpolation_val = self.interpolation_to_next_coord()
 
             # Calculate the distance between the current point and the next point
             distance = (x2 - x1, y2 - y1)
@@ -164,9 +165,6 @@ class vcar:
 
             # Send the car position to Cloud
             self.send_location(self.ID, (x2, y2), 4 if self.car_return else 3, self.battery_level, self.autonomy)
-
-            # Update the current interpolation_val
-            self.interpolation_val = interpolation_val
 
             # Add some delay to simulate the car movement
             time.sleep(car_speed)
