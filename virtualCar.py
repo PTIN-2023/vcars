@@ -152,7 +152,7 @@ class vcar:
             self.battery_level, self.autonomy = self.move_car(angle, distance, self.battery_level, self.autonomy)
 
             # Send the car position to Cloud
-            self.send_location(self.ID, self.coordinates[i], 4 if self.car_return else 3, self.battery_level, self.autonomy)
+            self.send_location(self.ID, (x2, y2), 4 if self.car_return else 3, self.battery_level, self.autonomy)
 
             # Update the current interpolation_val
             self.interpolation_val = interpolation_val
@@ -163,15 +163,18 @@ class vcar:
         self.car_return = not self.car_return
         self.coordinates.reverse()
 
-    def send_location(self, id, location, status, battery, autonomy):
+    def send_location(self, id, pos, status, battery, autonomy):
+        latitude, longitude = pos
+        print("CAR: " + str(id) + " | POSITION: " + latitude + " " + longitude)
+
         # Connect to MQTT server
         self.clientS.connect(mqtt_address, mqtt_port, 60)
 
         # JSON
         msg = {	"id_car": 	        id,
                 "location_act": 	{
-                    "latitude":     location[1],
-                    "longitude":    location[0]
+                    "latitude":     latitude,
+                    "longitude":    longitude
                 },
                 "status_num":       status,
                 "status":           status_car[status],
