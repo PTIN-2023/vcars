@@ -141,7 +141,7 @@ class vcar:
         longitude = longitude + longitude_uv*car_speed*delta_time
 
         # Compute interpolation value
-        interpolation_val = (latitude - self.coordinates[base_coord_index][1]) - (self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1])
+        interpolation_val = (latitude - self.coordinates[base_coord_index][1]) / (self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1])
 
         return (latitude, longitude, interpolation_val)
 
