@@ -29,7 +29,7 @@ status_desc = {
 mqtt_address = os.environ.get('MQTT_ADDRESS')
 mqtt_port = int(os.environ.get('MQTT_PORT'))
 num_cars = int(os.environ.get('NUM_CARS'))
-car_speed = int(os.environ.get('CAR_SPEED'))
+car_speed = float(os.environ.get('CAR_SPEED'))
 delta_time = 0.33
 
 # ------------------------------------------------------------------------------ #
