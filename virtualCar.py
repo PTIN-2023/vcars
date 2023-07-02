@@ -139,19 +139,21 @@ class vcar:
         # Compute next pos
         latitude = latitude + latitude_uv*car_speed*delta_time
         longitude = longitude + longitude_uv*car_speed*delta_time
-        print("CAR: " + str(self.ID) + " | NEW POS: " + str(latitude) + " " + str(longitude))
 
         # Compute interpolation value
         interpolation_val = (latitude - self.coordinates[base_coord_index][1]) - (self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1])
-        print("CAR: " + str(self.ID) + " | NEW INTERPOLATION VAR: " + str(interpolation_val))
 
         return (latitude, longitude, interpolation_val)
 
     def start_car(self):
         while self.interpolation_val < len(self.coordinates) - 1:
+            print("CAR: " + str(self.ID) + " | -------------------------------------------------")
             print("CAR: " + str(self.ID) + " | INTERPOLATION VAR: " + str(self.interpolation_val))
             x1, y1 = self.interpolation_to_coord()
+            print("CAR: " + str(id) + " | POSITION: " + str(x1) + " " + str(x2))
             x2, y2, interpolation_val = self.interpolation_to_next_coord()
+            print("CAR: " + str(self.ID) + " | NEW POS: " + str(x2) + " " + str(y2))
+            print("CAR: " + str(self.ID) + " | NEW INTERPOLATION VAR: " + str(interpolation_val))
 
             # Calculate the distance between the current point and the next point
             distance = (x2 - x1, y2 - y1)
@@ -176,7 +178,6 @@ class vcar:
 
     def send_location(self, id, pos, status, battery, autonomy):
         latitude, longitude = pos
-        print("CAR: " + str(id) + " | POSITION: " + str(latitude) + " " + str(longitude))
 
         # Connect to MQTT server
         self.clientS.connect(mqtt_address, mqtt_port, 60)
