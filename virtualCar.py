@@ -30,6 +30,7 @@ mqtt_address = os.environ.get('MQTT_ADDRESS')
 mqtt_port = int(os.environ.get('MQTT_PORT'))
 num_cars = int(os.environ.get('NUM_CARS'))
 car_speed = int(os.environ.get('CAR_SPEED'))
+delta_time = 0.33
 
 # ------------------------------------------------------------------------------ #
 
@@ -56,6 +57,7 @@ class vcar:
         self.car_return = False
         self.coordinates = None
         self.start_coordinates = False
+        self.interpolation_val = 0
 
         # Initialize the battery level and the autonomy
         self.autonomy = 2000
@@ -97,12 +99,48 @@ class vcar:
         
         return battery_level, autonomy
 
-    def start_car(self):
-        x1, y1 = self.coordinates[0][1], self.coordinates[0][0]
+    def interpolation_to_coord(self):
+        # Get current 
+        base_coord_index = min(math.floor(self.interpolation_val), len(self.coordinates) - 1)
+        next_coord_index = min(math.ceil(self.interpolation_val), len(self.coordinates) - 1)
 
-        # Loop through each coordinate
-        for i in range(1, len(self.coordinates)):
-            x2, y2 = self.coordinates[i][1], self.coordinates[i][0]
+        # Compute interpolated position
+        remainder_interpolation = self.interpolation_val % 1
+        latitude = self.coordinates[base_coord_index][1]*(1-remainder_interpolation) + self.coordinates[next_coord_index][1]*remainder_interpolation
+        longitude = self.coordinates[base_coord_index][0]*(1-remainder_interpolation) + self.coordinates[next_coord_index][0]*remainder_interpolation
+
+        return (latitude, longitude)
+    
+    def interpolation_to_next_coord(self):
+        # Get current
+        base_coord_index = min(math.floor(self.interpolation_val), len(self.coordinates) - 1)
+        next_coord_index = min(math.ceil(self.interpolation_val), len(self.coordinates) - 1)
+
+        # Compute interpolated position
+        remainder_interpolation = self.interpolation_val % 1
+        latitude = self.coordinates[base_coord_index][1]*(1-remainder_interpolation) + self.coordinates[next_coord_index][1]*remainder_interpolation
+        longitude = self.coordinates[base_coord_index][0]*(1-remainder_interpolation) + self.coordinates[next_coord_index][0]*remainder_interpolation
+
+        # Compute direction unit vector
+        latitude_distance = self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1]
+        longitude_distance = self.coordinates[next_coord_index][0] - self.coordinates[base_coord_index][0]
+        modulo = math.sqrt(latitude_distance*latitude_distance + longitude_distance*longitude_distance)
+        latitude_uv = latitude_distance/modulo
+        longitude_uv = longitude_distance/modulo
+
+        # Compute next pos
+        latitude = latitude + latitude_uv*car_speed*delta_time
+        longitude = longitude + longitude_uv*car_speed*delta_time
+
+        # Compute interpolation value
+        interpolation_val = (latitude - self.coordinates[base_coord_index][1]) - (self.coordinates[next_coord_index][1] - self.coordinates[base_coord_index][1])
+
+        return (latitude, longitude, interpolation_val)
+
+    def start_car(self):
+        while self.interpolation_val < len(self.coordinates) - 1:
+            x1, y1 = self.interpolation_to_coord()
+            x2, y2, interpolation_val = self.interpolation_to_next_coord()
 
             # Calculate the distance between the current point and the next point
             distance = (x2 - x1, y2 - y1)
@@ -116,8 +154,8 @@ class vcar:
             # Send the car position to Cloud
             self.send_location(self.ID, self.coordinates[i], 4 if self.car_return else 3, self.battery_level, self.autonomy)
 
-            # Update the current point
-            x1, y1 = x2, y2
+            # Update the current interpolation_val
+            self.interpolation_val = interpolation_val
 
             # Add some delay to simulate the car movement
             time.sleep(car_speed)
