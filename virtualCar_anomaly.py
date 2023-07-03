@@ -8,32 +8,36 @@ import paho.mqtt.client as mqtt
 
 status_car = {
     1 : "loading",
-    2 : "unloading", 
+    2 : "unloading_c",
     3 : "delivering",
     4 : "returning",
     5 : "waits",
     6 : "repairing",
-    7 : "alert"
+    7 : "alert",
+    8 : "unloading_a"#hablarlo con a2, eliminar paquete de la colmena (o poner que ese paquete esta en el almacen)
+    #bbdd a4 hablar con aitor
+    #comprobar el estado de los paquetes
 }
 
 status_desc = {
-    1 : "loading - se encuentra en el almacén cargando paquetes.",
-    2 : "unloading - es troba en la colmena descarregant.", 
+    1 : "loading - se encuentra en el magatzem cargan paquets.",
+    2 : "unloading_c - es troba en la colmena descarregant.",
     3 : "delivering - camí cap a la colmena.",
     4 : "returning - tornada al magatzem.",
     5 : "waits - no fa res.",
     6 : "repairing - en taller per revisió o avaria.",
-    7 : "alert - possible avaria de camí o qualsevol situació anormal."
+    7 : "alert - possible avaria de camí o qualsevol situació anormal.",
+    8 : "unloading_a - es troba en el magatzem descarregant."
 }
 
-mqtt_address = "147.83.159.195"
-mqtt_port = 24183
-num_cars = 10
-car_speed = 10
-#mqtt_address = os.environ.get('MQTT_ADDRESS')
-#mqtt_port = int(os.environ.get('MQTT_PORT'))
-#num_cars = int(os.environ.get('NUM_CARS'))
-#car_speed = float(os.environ.get('CAR_SPEED'))
+#mqtt_address = "147.83.159.195"
+#mqtt_port = 24183
+#num_cars = 10
+#car_speed = 5 #0.00002 #10
+mqtt_address = os.environ.get('MQTT_ADDRESS')
+mqtt_port = int(os.environ.get('MQTT_PORT'))
+num_cars = int(os.environ.get('NUM_CARS'))
+car_speed = float(os.environ.get('CAR_SPEED'))
 delta_time = 0.33
 
 # ------------------------------------------------------------------------------ #
@@ -86,7 +90,7 @@ class vcar:
         # Update the autonomy based on the distance traveled and the battery usage
         self.autonomy -= distance_traveled / 100 * self.battery_level * 20
 
-        stats = "CAR: %d | Battery level: %.2f | Autonomy: %.2f | " % (self.ID, self.battery_level, self.autonomy)
+        stats = "CAR: %d | Battery level: %.2f | Autonomy: %.2f | Coord: %s | " % (self.ID, self.battery_level, self.autonomy, str(self.interpolation_to_coord()))
 
         # Send signal to the car to move in the appropriate direction based on the angle
         if angle > math.pi/4 and angle < 3*math.pi/4:
@@ -163,14 +167,14 @@ class vcar:
             x2, y2, self.interpolation_val = self.interpolation_to_next_coord()
 
             if self.anomalia_forcada:
-                if len(self.coordinates)/2 > i:
-                    self.car_return = True
-                    self.coordinates = self.coordinates[:i]
+                if self.anomalia == "breakdown" or self.anomalia == "unncomunicate":
+                    break
+                elif (len(self.coordinates)-1)/2 > int(self.interpolation_val):
+                    self.car_return = not self.car_return
+                    self.coordinates = self.coordinates[:int(self.interpolation_val)]
                     self.interpolation_val = 0
                     self.coordinates.reverse()
-                else:
-                    self.car_return = False
-                break
+                    break
 
             # Calculate the distance between the current point and the next point
             distance = (x2 - x1, y2 - y1)
@@ -185,7 +189,7 @@ class vcar:
             self.send_location(self.ID, (x2, y2), 4 if self.car_return else 3, self.battery_level, self.autonomy)
 
             # Add some delay to simulate the car movement
-            time.sleep(car_speed)
+            time.sleep(delta_time)
 
         if not self.anomalia_forcada:
             self.car_return = not self.car_return
@@ -263,20 +267,20 @@ class vcar:
         
     def on_message(self, client, userdata, msg):
         if msg.topic == "PTIN2023/CAR/STARTROUTE":
-  
-            if(is_json(msg.payload.decode('utf-8'))):
-                
-                payload = json.loads(msg.payload.decode('utf-8'))
-                needed_keys = ["id_car", "order", "route"]
+            if self.coordinates == None:
+                if(is_json(msg.payload.decode('utf-8'))):
+                    
+                    payload = json.loads(msg.payload.decode('utf-8'))
+                    needed_keys = ["id_car", "order", "route"]
 
-                if all(key in payload for key in needed_keys):                
-                    if self.ID == payload[needed_keys[0]] and payload[needed_keys[1]] == 1:
-                        self.coordinates = json.loads(payload[needed_keys[2]])
-                        print("RECEIVED ROUTE: " + str(self.coordinates[0]) + " -> " + str(self.coordinates[-1]))
+                    if all(key in payload for key in needed_keys):                
+                        if self.ID == payload[needed_keys[0]] and payload[needed_keys[1]] == 1:
+                            self.coordinates = json.loads(payload[needed_keys[2]])
+                            print("RECEIVED ROUTE: " + str(self.coordinates[0]) + " -> " + str(self.coordinates[-1]))
+                    else:
+                        print("FORMAT ERROR! --> PTIN2023/CAR/STARTROUTE")        
                 else:
-                    print("FORMAT ERROR! --> PTIN2023/CAR/STARTROUTE")        
-            else:
-                print("Message: " + msg.payload.decode('utf-8'))
+                    print("Message: " + msg.payload.decode('utf-8'))
 
         elif msg.topic == "PTIN2023/CAR/ANOMALIA":
 
@@ -330,38 +334,59 @@ class vcar:
                 if self.car_return:
                     # Anomalia bateria baixa (<10%, >5%)
                     if self.anomalia == "set_battery_10":
-
                         self.battery_level = 10
                         self.anomalia_forcada = False
-                        description = ("ATENCIÓ: Nivell de bateria baix, " + str(self.battery_level) + "%. Accions: Retornant a la colmena...")
+                        description = ("ATENCIÓ: Nivell de bateria baix, " + str(self.battery_level) + "%. Accions: Retornant al punt de carga...")
                         self.send_anomaly_report(self.ID, description)
                         self.update_status(self.ID, 7)
+                        time.sleep(1)
+                        self.update_status(self.ID, 4)
                         self.start_car()
 
+                        self.update_status(self.ID, 8)
+                        time.sleep(5)
+                        self.battery_level = 100
                         self.update_status(self.ID, 5)
                         self.start_coordinates = False
 
                         self.coordinates = None
                         self.car_return = False
+                        self.anomalia_forcada = False
+                        self.anomalia = None
                         
                     # Anomalia bateria baixa (<5%)
                     elif self.anomalia == "set_battery_5":
                         self.battery_level = 5
                         self.anomalia_forcada = False
-                        description = ("CRÍTIC: Nivell de bateria baix, " + str(self.battery_level) + "%. Accions: Buscant refugi de forma immediata...")
+                        description = ("CRÍTIC: Nivell de bateria critic, " + str(self.battery_level) + "%. Accions: Retornant al punt de carga...")
                         self.send_anomaly_report(self.ID, description)
                         self.update_status(self.ID, 7)
+                        time.sleep(1)
+                        self.update_status(self.ID, 4)
                         self.start_car()
 
+                        self.update_status(self.ID, 8)
+                        time.sleep(5)
+                        self.battery_level = 100
                         self.update_status(self.ID, 5)
                         self.start_coordinates = False
 
                         self.coordinates = None
                         self.car_return = False
+                        self.anomalia_forcada = False
+                        self.anomalia = None
                         
                     elif self.anomalia == "breakdown" or self.anomalia == "unncomunicate":
-                        description = ("CRÍTIC: El Drone ha sofert un problema tècnic. Codi d'error: " + self.anomalia + ". Accions: Es requereix que un tècnic es desplaçi a l'útima localització del drone.")
+                        description = ("CRÍTIC: El Cotxe ha sofert un problema tècnic. Codi d'error: " + self.anomalia + ". Accions: Es requereix que un tècnic es desplaçi a l'útima localització del cotxe.")
                         self.send_anomaly_report(self.ID, description)
+                        self.update_status(self.ID, 7)
+                        
+                        self.start_coordinates = False
+                        self.coordinates = None
+                        self.car_return = False
+                        self.anomalia_forcada = False
+                        self.anomalia = None
+                        exit()
 
                     else:
                         # En proceso de descarga ~ 10s
@@ -378,43 +403,70 @@ class vcar:
 
                         self.battery_level = 10
                         self.anomalia_forcada = False
-                        description = ("ATENCIÓ: Nivell de bateria baix, " + str(self.battery_level) + "%. Accions: Retornant a la colmena...")
+                        description = ("ATENCIÓ: Nivell de bateria baix, " + str(self.battery_level) + "%. Accions: Retornant al punt de carga...")
                         self.send_anomaly_report(self.ID, description)
                         self.update_status(self.ID, 7)
+                        time.sleep(1)
+                        self.update_status(self.ID, 2)
+                        time.sleep(5)
+                        self.update_status(self.ID, 7) # en vez de esto poner alert, bateria al 100 y luego que vuelva?
+                        time.sleep(5)
+                        self.battery_level = 100
+                        self.update_status(self.ID, 4)
                         self.start_car()
-
-                        self.update_status(self.ID, 5)
                         self.start_coordinates = False
 
                         self.coordinates = None
                         self.car_return = False
+                        self.anomalia_forcada = False
+                        self.anomalia = None
+                        time.sleep(5)
+                        self.battery_level = 100
                         
                     # Anomalia bateria baixa (<5%)
                     elif self.anomalia == "set_battery_5":
                         self.battery_level = 5
                         self.anomalia_forcada = False
-                        description = ("CRÍTIC: Nivell de bateria baix, " + str(self.battery_level) + "%. Accions: Buscant refugi de forma immediata...")
+                        description = ("CRÍTIC: Nivell de bateria critic, " + str(self.battery_level) + "%. Accions: Retornant al punt de carga...")
                         self.send_anomaly_report(self.ID, description)
                         self.update_status(self.ID, 7)
+                        time.sleep(1)
+                        self.update_status(self.ID, 2)
+                        time.sleep(5)
+                        self.update_status(self.ID, 7) # en vez de esto poner alert, bateria al 100 y luego que vuelva?
+                        time.sleep(5)
+                        self.battery_level = 100
+                        self.update_status(self.ID, 4)
                         self.start_car()
-
-                        self.update_status(self.ID, 5)
                         self.start_coordinates = False
 
                         self.coordinates = None
                         self.car_return = False
+                        self.anomalia_forcada = False
+                        self.anomalia = None
+                        time.sleep(5)
+                        self.battery_level = 100
 
                     elif self.anomalia == "breakdown" or self.anomalia == "unncomunicate":
-                        description = ("CRÍTIC: El Drone ha sofert un problema tècnic. Codi d'error: " + self.anomalia + ". Accions: Es requereix que un tècnic es desplaçi a l'útima localització del drone.")
+                        description = ("CRÍTIC: El cotxe ha sofert un problema tècnic. Codi d'error: " + self.anomalia + ". Accions: Es requereix que un tècnic es desplaçi a l'útima localització del cotxe.")
                         self.send_anomaly_report(self.ID, description)
+                        self.update_status(self.ID, 7)
+                        
+                        self.start_coordinates = False
+                        self.coordinates = None
+                        self.car_return = False
+                        self.anomalia_forcada = False
+                        self.anomalia = None
+                        exit()
 
                     else:
                         # En espera
-                        self.update_status(self.ID, 5) # update_status(ID, 5, 0)
+                        self.update_status(self.ID, 5)
                         self.start_coordinates = False
 
                         self.car_return = False
                         self.coordinates = None
+                        self.battery_level = 100
 
 
 # ------------------------------------------------------------------------------ #
@@ -424,7 +476,7 @@ if __name__ == '__main__':
 
     threads = []
 
-    for i in range(10, num_cars+1):
+    for i in range(1, num_cars+1):
         car = vcar(i)
         API = Thread(target=car.start)
         CTL = Thread(target=car.control)

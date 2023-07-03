@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /opt
 
-ENTRYPOINT ["python3", "-u", "virtualCar.py"]
+ENTRYPOINT ["python3", "-u", "virtualCar_anomaly.py"]
