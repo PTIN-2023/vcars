@@ -14,9 +14,7 @@ status_car = {
     5 : "waits",
     6 : "repairing",
     7 : "alert",
-    8 : "unloading_a"#hablarlo con a2, eliminar paquete de la colmena (o poner que ese paquete esta en el almacen)
-    #bbdd a4 hablar con aitor
-    #comprobar el estado de los paquetes
+    8 : "unloading_a"
 }
 
 status_desc = {
@@ -30,10 +28,6 @@ status_desc = {
     8 : "unloading_a - es troba en el magatzem descarregant."
 }
 
-#mqtt_address = "147.83.159.195"
-#mqtt_port = 24183
-#num_cars = 10
-#car_speed = 5 #0.00002 #10
 mqtt_address = os.environ.get('MQTT_ADDRESS')
 mqtt_port = int(os.environ.get('MQTT_PORT'))
 num_cars = int(os.environ.get('NUM_CARS'))
@@ -175,6 +169,13 @@ class vcar:
                     self.interpolation_val = 0
                     self.coordinates.reverse()
                     break
+                elif self.anomalia == "set_battery_10":
+                    self.battery_level = 10
+                    self.update_status(self.ID, 7)
+                elif self.anomalia == "set_battery_5":
+                    self.battery_level = 5
+                    self.update_status(self.ID, 7)
+
 
             # Calculate the distance between the current point and the next point
             distance = (x2 - x1, y2 - y1)
@@ -409,8 +410,6 @@ class vcar:
                         time.sleep(1)
                         self.update_status(self.ID, 2)
                         time.sleep(5)
-                        self.update_status(self.ID, 7) # en vez de esto poner alert, bateria al 100 y luego que vuelva?
-                        time.sleep(5)
                         self.battery_level = 100
                         self.update_status(self.ID, 4)
                         self.start_car()
@@ -422,6 +421,7 @@ class vcar:
                         self.anomalia = None
                         time.sleep(5)
                         self.battery_level = 100
+                        self.update_status(self.ID, 5)
                         
                     # Anomalia bateria baixa (<5%)
                     elif self.anomalia == "set_battery_5":
@@ -433,8 +433,6 @@ class vcar:
                         time.sleep(1)
                         self.update_status(self.ID, 2)
                         time.sleep(5)
-                        self.update_status(self.ID, 7) # en vez de esto poner alert, bateria al 100 y luego que vuelva?
-                        time.sleep(5)
                         self.battery_level = 100
                         self.update_status(self.ID, 4)
                         self.start_car()
@@ -446,6 +444,7 @@ class vcar:
                         self.anomalia = None
                         time.sleep(5)
                         self.battery_level = 100
+                        self.update_status(self.ID, 5)
 
                     elif self.anomalia == "breakdown" or self.anomalia == "unncomunicate":
                         description = ("CRÍTIC: El cotxe ha sofert un problema tècnic. Codi d'error: " + self.anomalia + ". Accions: Es requereix que un tècnic es desplaçi a l'útima localització del cotxe.")
